@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Optional
+import os
+from typing import Any, Optional
 
 from databricks.sdk.service.iam import User as UserOut
 
@@ -12,11 +13,15 @@ from .models import (
     EnvironmentalRow,
     FilterOptions,
     FinancialRow,
+    GenieAskRequest,
+    GenieAskResponse,
     KpiSummary,
     SectorBar,
     TrendPoint,
     VersionOut,
 )
+
+GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "01f11894d0b411d4b44aafa3d41e98c5")
 
 router = create_router()
 
@@ -36,7 +41,12 @@ def me(user_ws: Dependencies.UserClient) -> UserOut:
 @router.get("/filters", response_model=FilterOptions, operation_id="getFilters")
 def get_filters(ws: Dependencies.Client) -> FilterOptions:
     sector_rows = query(ws, f"SELECT DISTINCT industry FROM {COMPANIES} ORDER BY 1")
-    company_rows = query(ws, f"SELECT company_id, company_name, industry FROM {COMPANIES} ORDER BY company_name")
+    company_rows = query(ws, f"""
+        SELECT MIN(company_id) AS company_id, company_name, MIN(industry) AS industry
+        FROM {COMPANIES}
+        GROUP BY company_name
+        ORDER BY industry, company_name
+    """)
     year_rows = query(ws, f"SELECT DISTINCT year FROM {METRICS} ORDER BY 1")
 
     return FilterOptions(
@@ -289,3 +299,64 @@ def get_companies(
         )
         for r in rows
     ]
+
+
+# ── Genie Ask AI ──────────────────────────────────────────────────────────────
+
+@router.post("/genie/ask", response_model=GenieAskResponse, operation_id="genieAsk")
+def genie_ask(body: GenieAskRequest, ws: Dependencies.Client) -> GenieAskResponse:
+    """Send a question to the Genie Space and return the answer + SQL + data."""
+    try:
+        if body.conversation_id:
+            msg = ws.genie.create_message_and_wait(
+                space_id=GENIE_SPACE_ID,
+                conversation_id=body.conversation_id,
+                content=body.question,
+            )
+        else:
+            msg = ws.genie.start_conversation_and_wait(
+                space_id=GENIE_SPACE_ID,
+                content=body.question,
+            )
+    except Exception as e:
+        return GenieAskResponse(
+            conversation_id=body.conversation_id or "",
+            message_id="",
+            question=body.question,
+            status="FAILED",
+            error=str(e),
+        )
+
+    text_content: Optional[str] = None
+    sql_query: Optional[str] = None
+    columns: list[str] = []
+    rows: list[list[Any]] = []
+
+    for attachment in (msg.attachments or []):
+        if attachment.text and attachment.text.content:
+            text_content = attachment.text.content
+        if attachment.query and attachment.query.query:
+            sql_query = attachment.query.query
+            # Fetch results using the statement_id if available
+            stmt_id = attachment.query.statement_id
+            if stmt_id:
+                try:
+                    stmt = ws.statement_execution.get_statement(stmt_id)
+                    if stmt.manifest and stmt.manifest.schema and stmt.manifest.schema.columns:
+                        columns = [c.name or "" for c in stmt.manifest.schema.columns]
+                    if stmt.result and stmt.result.data_array:
+                        rows = [list(r) for r in stmt.result.data_array]
+                except Exception:
+                    pass
+
+    return GenieAskResponse(
+        conversation_id=msg.conversation_id or "",
+        message_id=msg.message_id or "",
+        question=body.question,
+        text=text_content,
+        sql=sql_query,
+        columns=columns,
+        rows=rows,
+        row_count=len(rows),
+        status=msg.status.value if msg.status else "COMPLETED",
+    )

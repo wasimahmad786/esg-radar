@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { Suspense, useRef, useState } from "react";
 import { z } from "zod";
 import {
   useGetFiltersSuspense,
@@ -9,13 +9,17 @@ import {
   useGetEnvironmentalSuspense,
   useGetFinancialSuspense,
   useGetCompaniesSuspense,
+  useGenieAsk,
+  type GenieAskResponse,
 } from "@/lib/api";
 import selector from "@/lib/selector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -42,7 +46,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Leaf, Users, Building2, BarChart2 } from "lucide-react";
+import { Leaf, Users, Building2, BarChart2, Send, ChevronDown, ChevronUp, Bot, Loader2 } from "lucide-react";
 
 // ── Route + search params ──────────────────────────────────────────────────────
 
@@ -128,12 +132,24 @@ function FilterBarContent({ search }: { search: DashboardSearch }) {
           <SelectTrigger className="w-60">
             <SelectValue placeholder="All Companies" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-72">
             <SelectItem value="__all__">All Companies</SelectItem>
-            {filters.companies.map((c) => (
-              <SelectItem key={c.company_id} value={String(c.company_id)}>
-                {c.company_name}
-              </SelectItem>
+            {Object.entries(
+              filters.companies.reduce<Record<string, typeof filters.companies>>((acc, c) => {
+                (acc[c.industry] ??= []).push(c);
+                return acc;
+              }, {})
+            ).map(([industry, companies]) => (
+              <SelectGroup key={industry}>
+                <SelectLabel className="text-xs font-semibold text-muted-foreground">
+                  {industry}
+                </SelectLabel>
+                {companies.map((c) => (
+                  <SelectItem key={c.company_id} value={String(c.company_id)}>
+                    {c.company_name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             ))}
           </SelectContent>
         </Select>
@@ -488,6 +504,228 @@ function CompanyTable({ search }: { search: DashboardSearch }) {
   );
 }
 
+// ── Ask AI (Genie) Tab ────────────────────────────────────────────────────────
+
+const SAMPLE_QUESTIONS = [
+  "Which companies have the highest ESG score in 2025?",
+  "What is the average ESG score by industry sector?",
+  "Show me carbon emissions trend from 2015 to 2025",
+  "Which sector has the best governance scores?",
+  "Compare ESG scores between Technology and Energy sectors",
+  "Top 10 companies by market cap in the Finance sector",
+  "Which companies improved their ESG score the most over 10 years?",
+  "What is the relationship between revenue and ESG score?",
+];
+
+type ChatMessage = {
+  role: "user" | "assistant";
+  question: string;
+  response?: GenieAskResponse;
+};
+
+function SqlBlock({ sql }: { sql: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {open ? "Hide SQL" : "Show SQL"}
+      </button>
+      {open && (
+        <pre className="mt-2 p-3 rounded-md bg-muted text-xs overflow-x-auto font-mono text-foreground">
+          {sql}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function ResultTable({ columns, rows }: { columns: string[]; rows: unknown[][] }) {
+  if (!columns.length || !rows.length) return null;
+  return (
+    <div className="mt-3 overflow-auto max-h-64 rounded-md border text-sm">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((col) => (
+              <TableHead key={col} className="whitespace-nowrap text-xs">{col}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row, i) => (
+            <TableRow key={i}>
+              {row.map((cell, j) => (
+                <TableCell key={j} className="text-xs whitespace-nowrap">
+                  {cell === null || cell === undefined ? "—" : String(cell)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function AskAI() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [conversationId, setConversationId] = useState<string | undefined>();
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const mutation = useGenieAsk();
+
+  const send = async (question: string) => {
+    if (!question.trim() || mutation.isPending) return;
+    setInput("");
+
+    const userMsg: ChatMessage = { role: "user", question };
+    setMessages((prev) => [...prev, userMsg]);
+
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+
+    const result = await mutation.mutateAsync({ question, conversation_id: conversationId });
+
+    if (result.data.conversation_id) {
+      setConversationId(result.data.conversation_id);
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", question, response: result.data },
+    ]);
+
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
+
+  const reset = () => {
+    setMessages([]);
+    setConversationId(undefined);
+    setInput("");
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-primary" />
+          <div>
+            <p className="font-medium text-sm">Ask questions about the ESG data in plain English.</p>
+            <p className="text-xs text-muted-foreground">Powered by Databricks Genie · Corporate ESG Metrics space</p>
+          </div>
+        </div>
+        {messages.length > 0 && (
+          <button onClick={reset} className="text-xs text-muted-foreground hover:text-foreground underline">
+            New conversation
+          </button>
+        )}
+      </div>
+
+      {/* Sample questions */}
+      {messages.length === 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Try asking:</p>
+          <div className="flex flex-wrap gap-2">
+            {SAMPLE_QUESTIONS.map((q) => (
+              <button
+                key={q}
+                onClick={() => send(q)}
+                disabled={mutation.isPending}
+                className="px-3 py-1.5 text-xs rounded-full border border-border hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors text-muted-foreground disabled:opacity-50"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Chat messages */}
+      {messages.length > 0 && (
+        <div className="space-y-4 max-h-[520px] overflow-y-auto pr-1">
+          {messages.map((msg, i) => (
+            <div key={i}>
+              {msg.role === "user" ? (
+                <div className="flex justify-end">
+                  <div className="max-w-[75%] bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2 text-sm">
+                    {msg.question}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <Bot size={14} className="text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {msg.response?.error ? (
+                      <p className="text-sm text-destructive">{msg.response.error}</p>
+                    ) : (
+                      <>
+                        {msg.response?.text && (
+                          <p className="text-sm leading-relaxed">{msg.response.text}</p>
+                        )}
+                        {msg.response?.sql && <SqlBlock sql={msg.response.sql} />}
+                        {msg.response?.columns && msg.response?.rows && (
+                          <ResultTable
+                            columns={msg.response.columns}
+                            rows={msg.response.rows as unknown[][]}
+                          />
+                        )}
+                        {msg.response?.row_count != null && msg.response.row_count > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {msg.response.row_count} row{msg.response.row_count !== 1 ? "s" : ""}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {mutation.isPending && (
+            <div className="flex gap-2">
+              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Loader2 size={14} className="text-primary animate-spin" />
+              </div>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <span>Genie is thinking</span>
+                <span className="animate-pulse">...</span>
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+      )}
+
+      {/* Input */}
+      <div className="flex gap-2 mt-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send(input)}
+          placeholder="Ask anything about the ESG data..."
+          disabled={mutation.isPending}
+          className="flex-1 px-4 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+        />
+        <button
+          onClick={() => send(input)}
+          disabled={!input.trim() || mutation.isPending}
+          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+        >
+          {mutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+          Ask
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page component ───────────────────────────────────────────────────────
 
 function Dashboard() {
@@ -511,11 +749,14 @@ function Dashboard() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview">
-        <TabsList className="grid grid-cols-4 max-w-xl">
+        <TabsList className="grid grid-cols-5 max-w-2xl">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="environmental">Environmental</TabsTrigger>
           <TabsTrigger value="financial">Financial</TabsTrigger>
           <TabsTrigger value="comparison">Comparison</TabsTrigger>
+          <TabsTrigger value="ask-ai" className="flex items-center gap-1">
+            <Bot size={13} />Ask AI
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
@@ -555,6 +796,14 @@ function Dashboard() {
           <Suspense fallback={<ChartSkeleton height={500} />}>
             <CompanyTable search={search} />
           </Suspense>
+        </TabsContent>
+
+        <TabsContent value="ask-ai" className="mt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <AskAI />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

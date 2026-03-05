@@ -1,5 +1,5 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import type { UseQueryOptions, UseSuspenseQueryOptions } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import type { UseQueryOptions, UseSuspenseQueryOptions, UseMutationOptions } from "@tanstack/react-query";
 export class ApiError extends Error {
     status: number;
     statusText: string;
@@ -55,6 +55,22 @@ export interface FinancialRow {
     profit_margin: number;
     revenue: number;
     year: number;
+}
+export interface GenieAskRequest {
+    conversation_id?: string | null;
+    question: string;
+}
+export interface GenieAskResponse {
+    columns?: string[];
+    conversation_id: string;
+    error?: string | null;
+    message_id: string;
+    question: string;
+    row_count?: number;
+    rows?: unknown[][];
+    sql?: string | null;
+    status?: string;
+    text?: string | null;
 }
 export interface HTTPValidationError {
     detail?: ValidationError[];
@@ -562,6 +578,42 @@ export function useGetFinancialSuspense<TData = {
         queryKey: getFinancialKey(options?.params),
         queryFn: ()=>getFinancial(options?.params),
         ...options?.query
+    });
+}
+export const genieAsk = async (data: GenieAskRequest, options?: RequestInit): Promise<{
+    data: GenieAskResponse;
+}> =>{
+    const res = await fetch("/api/genie/ask", {
+        ...options,
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers
+        },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+        const body = await res.text();
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(body);
+        } catch  {
+            parsed = body;
+        }
+        throw new ApiError(res.status, res.statusText, parsed);
+    }
+    return {
+        data: await res.json()
+    };
+};
+export function useGenieAsk(options?: {
+    mutation?: UseMutationOptions<{
+        data: GenieAskResponse;
+    }, ApiError, GenieAskRequest>;
+}) {
+    return useMutation({
+        mutationFn: (data)=>genieAsk(data),
+        ...options?.mutation
     });
 }
 export interface GetKpisParams {

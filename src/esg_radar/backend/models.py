@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -89,3 +89,23 @@ class CompanyRow(BaseModel):
     revenue: Optional[float] = None
     profit_margin: Optional[float] = None
     market_cap: Optional[float] = None
+
+
+# ── Genie Ask AI ──────────────────────────────────────────────────────────────
+
+class GenieAskRequest(BaseModel):
+    question: str
+    conversation_id: Optional[str] = None
+
+
+class GenieAskResponse(BaseModel):
+    conversation_id: str
+    message_id: str
+    question: str
+    text: Optional[str] = None
+    sql: Optional[str] = None
+    columns: list[str] = []
+    rows: list[list[Any]] = []
+    row_count: int = 0
+    status: str = "COMPLETED"
+    error: Optional[str] = None
