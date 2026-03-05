@@ -129,6 +129,12 @@ export interface VersionOut {
 export interface GetCompaniesParams {
     sector?: string | null;
     year?: number | null;
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
 }
 export const getCompanies = async (params?: GetCompaniesParams, options?: RequestInit): Promise<{
     data: CompanyRow[];
@@ -140,7 +146,28 @@ export const getCompanies = async (params?: GetCompaniesParams, options?: Reques
     const url = queryString ? `/api/companies?${queryString}` : "/api/companies";
     const res = await fetch(url, {
         ...options,
-        method: "GET"
+        method: "GET",
+        headers: {
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        }
     });
     if (!res.ok) {
         const body = await res.text();
@@ -277,6 +304,12 @@ export function useCurrentUserSuspense<TData = {
 export interface GetEnvironmentalParams {
     sector?: string | null;
     company_id?: number | null;
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
 }
 export const getEnvironmental = async (params?: GetEnvironmentalParams, options?: RequestInit): Promise<{
     data: EnvironmentalRow[];
@@ -288,7 +321,28 @@ export const getEnvironmental = async (params?: GetEnvironmentalParams, options?
     const url = queryString ? `/api/environmental?${queryString}` : "/api/environmental";
     const res = await fetch(url, {
         ...options,
-        method: "GET"
+        method: "GET",
+        headers: {
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        }
     });
     if (!res.ok) {
         const body = await res.text();
@@ -340,6 +394,12 @@ export function useGetEnvironmentalSuspense<TData = {
 }
 export interface GetEsgBySectorParams {
     year?: number | null;
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
 }
 export const getEsgBySector = async (params?: GetEsgBySectorParams, options?: RequestInit): Promise<{
     data: SectorBar[];
@@ -350,7 +410,28 @@ export const getEsgBySector = async (params?: GetEsgBySectorParams, options?: Re
     const url = queryString ? `/api/esg-by-sector?${queryString}` : "/api/esg-by-sector";
     const res = await fetch(url, {
         ...options,
-        method: "GET"
+        method: "GET",
+        headers: {
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        }
     });
     if (!res.ok) {
         const body = await res.text();
@@ -403,6 +484,12 @@ export function useGetEsgBySectorSuspense<TData = {
 export interface GetEsgTrendsParams {
     sector?: string | null;
     company_id?: number | null;
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
 }
 export const getEsgTrends = async (params?: GetEsgTrendsParams, options?: RequestInit): Promise<{
     data: TrendPoint[];
@@ -414,7 +501,28 @@ export const getEsgTrends = async (params?: GetEsgTrendsParams, options?: Reques
     const url = queryString ? `/api/esg-trends?${queryString}` : "/api/esg-trends";
     const res = await fetch(url, {
         ...options,
-        method: "GET"
+        method: "GET",
+        headers: {
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        }
     });
     if (!res.ok) {
         const body = await res.text();
@@ -464,12 +572,41 @@ export function useGetEsgTrendsSuspense<TData = {
         ...options?.query
     });
 }
-export const getFilters = async (options?: RequestInit): Promise<{
+export interface GetFiltersParams {
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
+}
+export const getFilters = async (params?: GetFiltersParams, options?: RequestInit): Promise<{
     data: FilterOptions;
 }> =>{
     const res = await fetch("/api/filters", {
         ...options,
-        method: "GET"
+        method: "GET",
+        headers: {
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        }
     });
     if (!res.ok) {
         const body = await res.text();
@@ -485,40 +622,49 @@ export const getFilters = async (options?: RequestInit): Promise<{
         data: await res.json()
     };
 };
-export const getFiltersKey = ()=>{
+export const getFiltersKey = (params?: GetFiltersParams)=>{
     return [
-        "/api/filters"
+        "/api/filters",
+        params
     ] as const;
 };
 export function useGetFilters<TData = {
     data: FilterOptions;
 }>(options?: {
+    params?: GetFiltersParams;
     query?: Omit<UseQueryOptions<{
         data: FilterOptions;
     }, ApiError, TData>, "queryKey" | "queryFn">;
 }) {
     return useQuery({
-        queryKey: getFiltersKey(),
-        queryFn: ()=>getFilters(),
+        queryKey: getFiltersKey(options?.params),
+        queryFn: ()=>getFilters(options?.params),
         ...options?.query
     });
 }
 export function useGetFiltersSuspense<TData = {
     data: FilterOptions;
 }>(options?: {
+    params?: GetFiltersParams;
     query?: Omit<UseSuspenseQueryOptions<{
         data: FilterOptions;
     }, ApiError, TData>, "queryKey" | "queryFn">;
 }) {
     return useSuspenseQuery({
-        queryKey: getFiltersKey(),
-        queryFn: ()=>getFilters(),
+        queryKey: getFiltersKey(options?.params),
+        queryFn: ()=>getFilters(options?.params),
         ...options?.query
     });
 }
 export interface GetFinancialParams {
     sector?: string | null;
     company_id?: number | null;
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
 }
 export const getFinancial = async (params?: GetFinancialParams, options?: RequestInit): Promise<{
     data: FinancialRow[];
@@ -530,7 +676,28 @@ export const getFinancial = async (params?: GetFinancialParams, options?: Reques
     const url = queryString ? `/api/financial?${queryString}` : "/api/financial";
     const res = await fetch(url, {
         ...options,
-        method: "GET"
+        method: "GET",
+        headers: {
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        }
     });
     if (!res.ok) {
         const body = await res.text();
@@ -580,7 +747,15 @@ export function useGetFinancialSuspense<TData = {
         ...options?.query
     });
 }
-export const genieAsk = async (data: GenieAskRequest, options?: RequestInit): Promise<{
+export interface GenieAskParams {
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
+}
+export const genieAsk = async (data: GenieAskRequest, params?: GenieAskParams, options?: RequestInit): Promise<{
     data: GenieAskResponse;
 }> =>{
     const res = await fetch("/api/genie/ask", {
@@ -588,6 +763,24 @@ export const genieAsk = async (data: GenieAskRequest, options?: RequestInit): Pr
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
             ...options?.headers
         },
         body: JSON.stringify(data)
@@ -609,10 +802,13 @@ export const genieAsk = async (data: GenieAskRequest, options?: RequestInit): Pr
 export function useGenieAsk(options?: {
     mutation?: UseMutationOptions<{
         data: GenieAskResponse;
-    }, ApiError, GenieAskRequest>;
+    }, ApiError, {
+        params: GenieAskParams;
+        data: GenieAskRequest;
+    }>;
 }) {
     return useMutation({
-        mutationFn: (data)=>genieAsk(data),
+        mutationFn: (vars)=>genieAsk(vars.data, vars.params),
         ...options?.mutation
     });
 }
@@ -620,6 +816,12 @@ export interface GetKpisParams {
     sector?: string | null;
     company_id?: number | null;
     year?: number | null;
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
 }
 export const getKpis = async (params?: GetKpisParams, options?: RequestInit): Promise<{
     data: KpiSummary;
@@ -632,7 +834,28 @@ export const getKpis = async (params?: GetKpisParams, options?: RequestInit): Pr
     const url = queryString ? `/api/kpis?${queryString}` : "/api/kpis";
     const res = await fetch(url, {
         ...options,
-        method: "GET"
+        method: "GET",
+        headers: {
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        }
     });
     if (!res.ok) {
         const body = await res.text();

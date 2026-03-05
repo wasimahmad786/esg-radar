@@ -1,1 +1,6 @@
 command: ["uvicorn", "esg_radar.backend.app:app", "--workers", "2"]
+env:
+  - name: DATABRICKS_SQL_WAREHOUSE_ID
+    value: "490be1d9f2635bec"
+  - name: GENIE_SPACE_ID
+    value: "01f11894d0b411d4b44aafa3d41e98c5"
