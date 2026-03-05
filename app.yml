@@ -1,0 +1,1 @@
+command: ["uvicorn", "esg_radar.backend.app:app", "--workers", "2"]
