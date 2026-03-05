@@ -13,10 +13,23 @@ resources:
   apps:
     esg-radar-app:
       name: "esg-radar"
-      description: "esg-radar created with apx"
+      description: "ESG Performance Dashboard — 1,000 companies, 11 years of ESG & financial metrics"
       source_code_path: ./.build
+      resources:
+        - name: databricks-sql-warehouse
+          description: "SQL warehouse for ESG data queries"
+          sql_warehouse:
+            id: "490be1d9f2635bec"
+            permission: "CAN_USE"
 
 targets:
   dev:
     mode: development
     default: true
+    workspace:
+      profile: fe-vm-1
+
+  prod:
+    mode: production
+    workspace:
+      profile: fe-vm-1
