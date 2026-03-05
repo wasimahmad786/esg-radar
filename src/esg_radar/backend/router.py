@@ -39,7 +39,7 @@ def me(user_ws: Dependencies.UserClient) -> UserOut:
 # ── Filters ───────────────────────────────────────────────────────────────────
 
 @router.get("/filters", response_model=FilterOptions, operation_id="getFilters")
-def get_filters(ws: Dependencies.Client) -> FilterOptions:
+def get_filters(ws: Dependencies.UserClient) -> FilterOptions:
     sector_rows = query(ws, f"SELECT DISTINCT industry FROM {COMPANIES} ORDER BY 1")
     company_rows = query(ws, f"""
         SELECT MIN(company_id) AS company_id, company_name, MIN(industry) AS industry
@@ -67,7 +67,7 @@ def get_filters(ws: Dependencies.Client) -> FilterOptions:
 
 @router.get("/kpis", response_model=KpiSummary, operation_id="getKpis")
 def get_kpis(
-    ws: Dependencies.Client,
+    ws: Dependencies.UserClient,
     sector: Optional[str] = None,
     company_id: Optional[int] = None,
     year: Optional[int] = None,
@@ -97,7 +97,7 @@ def get_kpis(
 
 @router.get("/esg-trends", response_model=list[TrendPoint], operation_id="getEsgTrends")
 def get_esg_trends(
-    ws: Dependencies.Client,
+    ws: Dependencies.UserClient,
     sector: Optional[str] = None,
     company_id: Optional[int] = None,
 ) -> list[TrendPoint]:
@@ -132,7 +132,7 @@ def get_esg_trends(
 
 @router.get("/esg-by-sector", response_model=list[SectorBar], operation_id="getEsgBySector")
 def get_esg_by_sector(
-    ws: Dependencies.Client,
+    ws: Dependencies.UserClient,
     year: Optional[int] = None,
 ) -> list[SectorBar]:
     where = build_where(year=year)
@@ -178,7 +178,7 @@ def get_esg_by_sector(
 
 @router.get("/environmental", response_model=list[EnvironmentalRow], operation_id="getEnvironmental")
 def get_environmental(
-    ws: Dependencies.Client,
+    ws: Dependencies.UserClient,
     sector: Optional[str] = None,
     company_id: Optional[int] = None,
 ) -> list[EnvironmentalRow]:
@@ -211,7 +211,7 @@ def get_environmental(
 
 @router.get("/financial", response_model=list[FinancialRow], operation_id="getFinancial")
 def get_financial(
-    ws: Dependencies.Client,
+    ws: Dependencies.UserClient,
     sector: Optional[str] = None,
     company_id: Optional[int] = None,
 ) -> list[FinancialRow]:
@@ -246,7 +246,7 @@ def get_financial(
 
 @router.get("/companies", response_model=list[CompanyRow], operation_id="getCompanies")
 def get_companies(
-    ws: Dependencies.Client,
+    ws: Dependencies.UserClient,
     sector: Optional[str] = None,
     year: Optional[int] = None,
 ) -> list[CompanyRow]:
@@ -304,7 +304,7 @@ def get_companies(
 # ── Genie Ask AI ──────────────────────────────────────────────────────────────
 
 @router.post("/genie/ask", response_model=GenieAskResponse, operation_id="genieAsk")
-def genie_ask(body: GenieAskRequest, ws: Dependencies.Client) -> GenieAskResponse:
+def genie_ask(body: GenieAskRequest, ws: Dependencies.UserClient) -> GenieAskResponse:
     """Send a question to the Genie Space and return the answer + SQL + data."""
     try:
         if body.conversation_id:
